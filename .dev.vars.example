@@ -1,0 +1,5 @@
+ADMIN_PASSWORD=choose-a-long-unique-password
+SESSION_SECRET=choose-an-independent-long-random-secret
+SERVERCHAN_SENDKEY=SCT_your_sendkey
+PUSHDEER_PUSHKEY=
+WECOM_ROBOT_WEBHOOK=

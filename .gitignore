@@ -1,0 +1,14 @@
+node_modules/
+.wrangler/
+.dev.vars
+.env
+.env.*
+!.env.example
+.admin-password.local
+.secret-upload.local.json
+.serverchan-key.local
+.pushdeer-key.local
+.wecom-robot-webhook.local
+wrangler.jsonc
+ARCHITECTURE.md
+PAGE_DESIGN.md

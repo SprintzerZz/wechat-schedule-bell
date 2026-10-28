@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>微信日程铃 · 日程管理</title>
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem('schedule-theme') === 'dark' ? 'dark' : 'light'; } catch { document.documentElement.dataset.theme = 'light'; }</script>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/theme.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <section id="loginView" class="login-screen" hidden>
+    <form id="loginForm" class="login-card">
+      <div class="brand-mark">日</div>
+      <p class="eyebrow">TODAY SCHEDULE / LOGIN</p>
+      <h1>今天，安排好了吗？</h1>
+      <p class="muted">安排保存在云端，笔记本关机也能按时提醒。</p>
+      <div class="theme-switch" role="group" aria-label="选择主题"><button class="theme-choice" type="button" data-theme-choice="light" aria-label="亮色主题" title="亮色主题">☀</button><button class="theme-choice" type="button" data-theme-choice="dark" aria-label="暗色主题" title="暗色主题">☾</button></div>
+      <label>管理密码<input id="password" type="password" autocomplete="current-password" required></label>
+      <button class="primary full" type="submit">登录</button>
+      <p id="loginError" class="error" role="alert"></p>
+    </form>
+  </section>
+
+  <div id="appView" hidden>
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="brand"><span class="brand-mark small">铃</span><div><strong>微信日程铃<span class="brand-star">✳</span></strong><small>WECHAT SCHEDULE BELL</small></div></div>
+        <div class="header-actions"><span class="header-time"><span class="live-dot"></span> 云端运行中 · 北京时间</span><div class="theme-switch" role="group" aria-label="选择主题"><button class="theme-choice" type="button" data-theme-choice="light" aria-label="亮色主题" title="亮色主题">☀</button><button class="theme-choice" type="button" data-theme-choice="dark" aria-label="暗色主题" title="暗色主题">☾</button></div><button id="settingsButton" class="text-button">设置</button><button id="logoutButton" class="text-button">退出</button></div>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="hero">
+        <div class="hero-copy"><p class="eyebrow hero-kicker"><span class="kicker-square"></span> YOUR DAILY CONTROL ROOM</p><h1>把今天<span class="highlight-word">安排好<span class="highlight-spark">✳</span></span></h1><p class="muted">一次录入，按你的节奏循环。每天的安排，准时送到你选的通知通道。</p></div>
+        <div class="hero-cards">
+          <div class="send-card reminder-card"><div class="send-card-top"><span id="reminderCardLabel" class="send-card-label">下一条微信提醒</span><span class="send-dot" aria-hidden="true"></span></div><strong id="nextReminderTime">正在读取…</strong><span id="nextReminderDetail">即将显示最近一条单独提醒</span><div id="reminderCardFoot" class="send-card-foot">WECHAT · INDIVIDUAL REMINDER</div></div>
+          <div class="send-card digest-card"><div class="send-card-top"><span class="send-card-label">下一条每日汇总</span><span class="send-dot" aria-hidden="true"></span></div><strong id="nextSend">08:00</strong><span id="sendStatus">正在读取状态…</span><div class="send-card-foot">CLOUDFLARE · AUTOMATIC DELIVERY</div></div>
+        </div>
+      </section>
+
+      <div id="notice" class="notice" role="status" hidden></div>
+
+      <section class="calendar-card card" aria-label="月历">
+        <div class="calendar-header">
+          <div><p class="eyebrow">MONTHLY SCHEDULE</p><h2 id="monthLabel">正在读取月份…</h2><p id="monthSummary" class="calendar-subtitle">查看每一天的安排</p></div>
+          <div class="calendar-actions"><button id="prevMonth" class="icon-button" type="button" aria-label="上个月">‹</button><button id="todayButton" class="subtle-button" type="button">回到今天</button><button id="nextMonth" class="icon-button" type="button" aria-label="下个月">›</button></div>
+        </div>
+        <div class="calendar-weekdays" aria-hidden="true"><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span></div>
+        <div id="calendarGrid" class="calendar-grid" role="group" aria-label="选择日期"></div>
+        <div class="calendar-legend"><span><i class="legend-task"></i>有安排</span><span><i class="legend-today"></i>今天</span><span><i class="legend-selected"></i>当前选择</span></div>
+        <div class="calendar-bottom">
+          <div class="date-summary"><span id="dayCaption">当前选择</span><strong id="selectedDateLabel">—</strong><span id="eventCount">0 项安排</span></div>
+          <label class="calendar-jump">跳转日期<input id="selectedDay" type="date" aria-label="跳转日期"></label>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <section class="card list-card">
+          <div class="section-head"><div><p class="eyebrow">SCHEDULE</p><h2>当天安排</h2></div><span id="listDate" class="pill"></span></div>
+          <div id="eventsList" class="events-list"></div>
+        </section>
+
+        <div class="right-column">
+          <section class="card editor-card">
+            <div class="section-head"><div><p class="eyebrow">EDITOR</p><h2 id="formTitle">新增安排</h2></div><button id="cancelEdit" class="text-button" hidden>取消编辑</button></div>
+            <form id="eventForm">
+              <label>标题 <span class="required">*</span><input id="title" maxlength="100" placeholder="例如：项目例会" required></label>
+              <label>备注 <span class="optional">可选</span><textarea id="note" maxlength="1000" rows="2" placeholder="需要提前准备什么？"></textarea></label>
+              <label>安排类型<select id="eventType"><option value="single">单次安排</option><option value="cycle">周期循环</option></select></label>
+              <div id="singleFields">
+                <label>日期 <span class="required">*</span><input id="eventDay" type="date"></label>
+                <div class="field-row"><label>任务开始 <input id="startTime" type="time"></label><label>任务结束 <span class="optional">可选</span><input id="endTime" type="time"></label></div>
+                <label class="check-line remind-toggle"><input id="remindEnabled" type="checkbox" checked><span>单独发送提醒</span></label>
+                <label id="remindTimeField">提醒时间 <span class="optional">默认随任务开始同步，可单独修改</span><input id="remindTime" type="time"></label>
+              </div>
+              <div id="cycleFields" hidden>
+                <div class="field-row"><label>首次日期 <input id="firstDay" type="date"></label><label>每隔几天 <input id="intervalDays" type="number" min="1" max="365" value="3"></label></div>
+                <div class="field-row"><label>每轮几组时间 <input id="slotCount" type="number" min="1" max="20" value="3"></label><label>结束方式<select id="endMode"><option value="never">一直循环</option><option value="date">截止日期</option></select></label></div>
+                <label id="stopDayField" hidden>截止日期 <input id="stopDay" type="date"></label>
+                <div class="slot-heading"><strong>一轮时间模板</strong><small>每组可单独开关提醒或修改时间</small></div>
+                <div id="slotRows"></div>
+                <div class="cycle-preview"><strong>未来两轮预览</strong><div id="cyclePreview"></div></div>
+              </div>
+              <button id="saveButton" class="primary full" type="submit">保存安排</button>
+              <p id="formError" class="error" role="alert"></p>
+            </form>
+          </section>
+
+          <section class="card preview-card">
+            <div class="section-head"><div><p class="eyebrow">MESSAGE PREVIEW</p><h2>每日汇总预览</h2></div><span class="pill soft">不会发送</span></div>
+            <pre id="messagePreview" class="message-preview"></pre>
+            <p class="hint">实际发送时会按任务开始时间排序。单次提醒会通过所选通道另外发送。</p>
+            <p id="selectedDayStatus" class="hint">正在读取所选日期的发送状态…</p>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="settingsDialog" class="settings-dialog">
+    <form id="settingsForm" method="dialog">
+      <div class="section-head"><div><p class="eyebrow">PREFERENCES</p><h2>发送设置</h2></div><button id="closeSettings" type="button" class="icon-button" aria-label="关闭">×</button></div>
+      <label>通知通道<select id="notificationChannel"><option value="serverchan">微信通知（Server酱）</option><option value="pushdeer">PushDeer 手机通知</option><option value="wecom">企业微信应用消息（Server酱）</option><option value="wecom_robot">企业微信群机器人</option></select></label>
+      <p class="hint">每日汇总与单次提醒都会发送到所选通道。</p>
+      <label id="wecomChannelField" hidden>企业微信应用消息通道编号<input id="wecomChannelId" type="text" inputmode="numeric" pattern="[0-9]{1,20}" autocomplete="off" placeholder="在 Server酱消息通道页面查看"></label>
+      <p id="wecomChannelHint" class="hint" hidden>先在 <a href="https://sct.ftqq.com/" target="_blank" rel="noopener noreferrer">Server酱控制台</a>的「消息通道」中绑定企业微信自建应用，再填入该通道的编号。原有微信通道无需改动。</p>
+      <label>每日汇总时间（北京时间）<input id="sendAt" type="time" required></label>
+      <label class="check-line"><input id="sendEmpty" type="checkbox"><span>没有安排时也发送「今天暂无安排」</span></label>
+      <label class="check-line"><input id="remindersEnabled" type="checkbox"><span>开启单次提醒</span></label>
+      <label>每日自动消息上限<input id="dailyLimit" type="number" min="1" max="100" value="5"></label>
+      <p class="hint">消息额度以所选服务控制台为准。定时任务每分钟检查一次，实际到达时间可能略有延迟。</p>
+      <p id="channelStatus" class="hint"></p>
+      <div class="dialog-actions"><button id="testPush" type="button" class="subtle-button">测试选中通道</button><button class="primary" type="submit">保存设置</button></div>
+      <p id="settingsError" class="error" role="alert"></p>
+    </form>
+  </dialog>
+</body>
+</html>
