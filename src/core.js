@@ -16,13 +16,19 @@ export function isDue(nowTime, sendAt, minutesAfter = 120) {
 
 export function renderDigest(day, events) {
   const [, month, date] = day.split('-');
-  const lines = [];
-  for (const item of [...events].sort((a, b) => a.start_time.localeCompare(b.start_time) || a.id.localeCompare(b.id))) {
-    lines.push(`${item.start_time}${item.end_time ? `–${item.end_time}` : ''} ${item.title}`);
-    if (item.note) lines.push(`  ${item.note}`);
+  const weekday = '日一二三四五六'[new Date(`${day}T00:00:00Z`).getUTCDay()];
+  const title = `📅 今日安排 · ${Number(month)}月${Number(date)}日 周${weekday}`;
+  if (!events.length) return { title, body: '今天暂无安排。\n\n给自己留点自由时间吧 ✨' };
+  const lines = [`📌 共 ${events.length} 项安排`, ''];
+  const sorted = [...events].sort((a, b) => a.start_time.localeCompare(b.start_time) || a.id.localeCompare(b.id));
+  for (const [index, item] of sorted.entries()) {
+    const time = `${item.start_time}${item.end_time ? `–${item.end_time}` : ''}`;
+    lines.push(`${String(index + 1).padStart(2, '0')}  ⏰ ${time}  ${item.title}`);
+    if (item.note) lines.push(`      📝 ${item.note.replace(/\n/g, '\n      ')}`);
+    if (index < sorted.length - 1) lines.push('');
   }
-  lines.push('', `共 ${events.length} 项`);
-  return { title: `今日安排 · ${Number(month)}月${Number(date)}日`, body: lines.join('\n') };
+  lines.push('', '✨ 按自己的节奏，逐项完成。');
+  return { title, body: lines.join('\n') };
 }
 
 export function renderReminder(day, item) {

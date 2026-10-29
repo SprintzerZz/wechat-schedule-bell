@@ -87,7 +87,7 @@ async function sendDue(env, now) {
   const limit = Math.max(1, Math.min(100, Number(settings.daily_limit) || 5));
   const errors = [];
   if (isDue(time, settings.send_at) && (events.length || settings.send_empty)) {
-    const message = events.length ? renderDigest(day, events) : { title: '今日安排', body: '今天暂无安排' };
+    const message = renderDigest(day, events);
     try { await deliver(env, settings.notification_channel, settings.wecom_channel_id, day, `digest:${day}`, 'digest', message, now, limit); }
     catch (error) { errors.push(error); }
   }
@@ -196,7 +196,7 @@ async function handleApi(request, env) {
   if (path === '/api/preview' && method === 'GET') {
     const day = url.searchParams.get('day');
     const items = await eventsFor(env.DB, day);
-    return reply({ message: items.length ? renderDigest(day, items) : { title: '今日安排', body: '今天暂无安排' } });
+    return reply({ message: renderDigest(day, items) });
   }
   if (path === '/api/status' && method === 'GET') {
     const day = url.searchParams.get('day');
